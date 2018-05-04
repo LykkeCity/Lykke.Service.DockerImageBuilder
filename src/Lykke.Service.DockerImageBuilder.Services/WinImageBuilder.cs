@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Lykke.Service.DockerImageBuilder.Services
 {
@@ -14,6 +15,9 @@ namespace Lykke.Service.DockerImageBuilder.Services
         private const string _dockerfileName = "Dockerfile";
         private const string _imageLinePrefix = "FROM ";
         private const string _winImageSuffix = "-nano";
+        private const string _slnFilesPattern = "*.sln";
+        private const string _projFilesPattern = "*.csproj";
+        private const string _versionLinePrefix = "<Version>";
 
         private readonly string _diskPath;
         private readonly string _baseWinImage;
@@ -59,12 +63,27 @@ namespace Lykke.Service.DockerImageBuilder.Services
             ExecuteCommand("git", $"reset --hard FETCH_HEAD");
         }
 
-        public void BuildAndPublishApp()
+        public void BuildAndPublishApp(string buildNumber)
         {
-            var slnFiles = Directory.EnumerateFiles(_workingPath, "*.sln");
+            var slnFiles = Directory.EnumerateFiles(_workingPath, _slnFilesPattern);
             if (!slnFiles.Any())
-                throw new InvalidOperationException($"Coildn't find any *.sln file from {_gitRepoUrl} on path {_workingPath}");
+                throw new InvalidOperationException($"Coildn't find any {_slnFilesPattern} file from {_gitRepoUrl}");
             string slnFile = slnFiles.First();
+            var projFiles = Directory.EnumerateFiles(_workingPath, _projFilesPattern, SearchOption.AllDirectories);
+            if (!projFiles.Any())
+                throw new InvalidOperationException($"Coildn't find any {_projFilesPattern} file from {_gitRepoUrl}");
+            foreach (var projFile in projFiles)
+            {
+                var lines = File.ReadAllLines(projFile);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (!lines[i].Contains(_versionLinePrefix))
+                        continue;
+                    lines[i] = Regex.Replace(lines[i], ">[0-9.]+<", $">{buildNumber}<");
+                    break;
+                }
+                File.WriteAllLines(projFile, lines);
+            }
             ExecuteCommand("dotnet", $"build {slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\"");
             ExecuteCommand("dotnet", $"publish {slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" --no-restore --output {_publishPath}");
         }

@@ -37,6 +37,7 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
         public IActionResult WindowsImage(
             string gitRepoUrl,
             string commitId,
+            string buildNumber,
             string fullImageName)
         {
             if (string.IsNullOrWhiteSpace(gitRepoUrl))
@@ -44,6 +45,9 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
 
             if (string.IsNullOrWhiteSpace(commitId))
                 return BadRequest(ErrorResponse.Create($"Input parameter {nameof(commitId)} is empty"));
+
+            if (string.IsNullOrWhiteSpace(buildNumber))
+                return BadRequest(ErrorResponse.Create($"Input parameter {nameof(buildNumber)} is empty"));
 
             if (string.IsNullOrWhiteSpace(fullImageName))
                 return BadRequest(ErrorResponse.Create($"Input parameter {nameof(fullImageName)} is empty"));
@@ -54,7 +58,7 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
             {
                 winImageBuilder.FetchSources(commitId);
 
-                winImageBuilder.BuildAndPublishApp();
+                winImageBuilder.BuildAndPublishApp(buildNumber);
 
                 winImageBuilder.BuildDockerImage(fullImageName);
 

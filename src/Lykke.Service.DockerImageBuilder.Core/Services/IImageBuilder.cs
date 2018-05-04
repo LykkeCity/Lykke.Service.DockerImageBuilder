@@ -6,7 +6,7 @@
 
         void FetchSources(string commitId);
 
-        void BuildAndPublishApp();
+        void BuildAndPublishApp(string buildNumber);
 
         void BuildDockerImage(string fullImageName);
 
