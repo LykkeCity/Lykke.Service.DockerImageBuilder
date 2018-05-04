@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace Lykke.Service.DockerImageBuilder.Controllers
 {
@@ -34,11 +33,10 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(BadRequestResult), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> WindowsImage(
+        public IActionResult WindowsImage(
             string gitRepoUrl,
             string commitId,
-            string fullImageName,
-            string dockerFilePath)
+            string fullImageName)
         {
             if (string.IsNullOrWhiteSpace(gitRepoUrl))
                 return BadRequest(ErrorResponse.Create($"Input parameter {nameof(gitRepoUrl)} is empty"));
@@ -48,9 +46,6 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
 
             if (string.IsNullOrWhiteSpace(fullImageName))
                 return BadRequest(ErrorResponse.Create($"Input parameter {nameof(fullImageName)} is empty"));
-
-            if (string.IsNullOrWhiteSpace(dockerFilePath))
-                return BadRequest(ErrorResponse.Create($"Input parameter {nameof(dockerFilePath)} is empty"));
 
             var winImageBuilder = _imageBuilderFactory.CreateWinImageBuilder(gitRepoUrl);
 
@@ -72,7 +67,7 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
             {
                 _buildDataCleaner.CleanUp(winImageBuilder.BuildDirectory);
 
-                _log.WriteError(nameof(BuildController), new { gitRepoUrl, commitId, fullImageName, dockerFilePath }, ex);
+                _log.WriteError(nameof(BuildController), new { gitRepoUrl, commitId, fullImageName }, ex);
 
                 return StatusCode((int)HttpStatusCode.InternalServerError, ErrorResponse.Create(ex.Message));
             }
