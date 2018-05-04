@@ -93,11 +93,11 @@ namespace Lykke.Service.DockerImageBuilder.Services
             ExecuteCommand("docker ", $"build -t {fullImageName} {_publishLocalPath}");
         }
 
-        public void PushToDockerHub(string fullImageName, string dockerHubPassword)
+        public void PublishDocker(string fullImageName)
         {
             var dockerHubType = _dockerHubInfoProvider.GetHubTypeFromImageFullName(fullImageName);
-            string dockerHubName = _dockerHubInfoProvider.GetDockerHubName(dockerHubType);
-            ExecuteCommand("docker ", $"login -u {dockerHubName} -p {dockerHubPassword}");
+            (string dockerHubName, string dockerHubPass) = _dockerHubInfoProvider.GetDockerHubInfo(dockerHubType);
+            ExecuteCommand("docker ", $"login -u {dockerHubName} -p {dockerHubPass}");
             if (!fullImageName.EndsWith(_winImageSuffix))
                 fullImageName = fullImageName + _winImageSuffix;
             ExecuteCommand("docker ", $"push {fullImageName}");

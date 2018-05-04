@@ -37,8 +37,7 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
         public IActionResult WindowsImage(
             string gitRepoUrl,
             string commitId,
-            string fullImageName,
-            string dockerHubPassword)
+            string fullImageName)
         {
             if (string.IsNullOrWhiteSpace(gitRepoUrl))
                 return BadRequest(ErrorResponse.Create($"Input parameter {nameof(gitRepoUrl)} is empty"));
@@ -48,9 +47,6 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
 
             if (string.IsNullOrWhiteSpace(fullImageName))
                 return BadRequest(ErrorResponse.Create($"Input parameter {nameof(fullImageName)} is empty"));
-
-            if (string.IsNullOrWhiteSpace(dockerHubPassword))
-                return BadRequest(ErrorResponse.Create($"Input parameter {nameof(dockerHubPassword)} is empty"));
 
             var winImageBuilder = _imageBuilderFactory.CreateWinImageBuilder(gitRepoUrl);
 
@@ -62,7 +58,7 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
 
                 winImageBuilder.BuildDockerImage(fullImageName);
 
-                winImageBuilder.PushToDockerHub(fullImageName, dockerHubPassword);
+                winImageBuilder.PublishDocker(fullImageName);
 
                 _buildDataCleaner.CleanUp(winImageBuilder.BuildDirectory);
 

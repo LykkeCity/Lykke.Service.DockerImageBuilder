@@ -8,18 +8,25 @@ namespace Lykke.Service.DockerImageBuilder.Services
     public class DockerHubInfoProvider : IDockerHubInfoProvider
     {
         private readonly Dictionary<DockerHubType, string> _dockerHubNames;
+        private readonly Dictionary<DockerHubType, string> _dockerHubPasswords;
 
-        public DockerHubInfoProvider(Dictionary<DockerHubType, string> dockerHubNames)
+        public DockerHubInfoProvider(
+            Dictionary<DockerHubType, string> dockerHubNames,
+            Dictionary<DockerHubType, string> dockerHubPasswords)
         {
             _dockerHubNames = dockerHubNames;
+            _dockerHubPasswords = dockerHubPasswords;
         }
 
-        public string GetDockerHubName(DockerHubType dockerHubType)
+        public (string, string) GetDockerHubInfo(DockerHubType dockerHubType)
         {
             if (!_dockerHubNames.ContainsKey(dockerHubType))
                 throw new InvalidOperationException($"Unknown docker hub type {dockerHubType}");
 
-            return _dockerHubNames[dockerHubType];
+            if (!_dockerHubPasswords.ContainsKey(dockerHubType))
+                throw new InvalidOperationException($"Don't know a password for hub type {dockerHubType}");
+
+            return (_dockerHubNames[dockerHubType], _dockerHubPasswords[dockerHubType]);
         }
 
         public DockerHubType GetHubTypeFromImageFullName(string fullDockerImageName)

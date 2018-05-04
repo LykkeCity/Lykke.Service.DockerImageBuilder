@@ -12,11 +12,19 @@ namespace Lykke.Service.DockerImageBuilder.Modules
     public class ServiceModule : Module
     {
         private readonly DockerImageBuilderSettings _settings;
+        private readonly string _devDockerHubPassword;
+        private readonly string _prodDockerHubPassword;
         private readonly ILog _log;
 
-        public ServiceModule(DockerImageBuilderSettings settings, ILog log)
+        public ServiceModule(
+            DockerImageBuilderSettings settings,
+            string devDockerHubPassword,
+            string prodDockerHubPassword,
+            ILog log)
         {
             _settings = settings;
+            _devDockerHubPassword = devDockerHubPassword;
+            _prodDockerHubPassword = prodDockerHubPassword;
             _log = log;
         }
 
@@ -43,9 +51,16 @@ namespace Lykke.Service.DockerImageBuilder.Modules
                 dockerHubNamesDict.Add(hubType, dockerHubInfo.HubName);
             }
 
+            var dockerHubPasswordsDict = new Dictionary<DockerHubType, string>()
+            {
+                { DockerHubType.Dev, _devDockerHubPassword },
+                { DockerHubType.Prod, _prodDockerHubPassword },
+            };
+
             builder.RegisterType<DockerHubInfoProvider>()
                 .As<IDockerHubInfoProvider>()
-                .WithParameter("dockerHubNames", dockerHubNamesDict);
+                .WithParameter("dockerHubNames", dockerHubNamesDict)
+                .WithParameter("dockerHubPasswords", dockerHubPasswordsDict);
 
             builder.RegisterType<ImageBuilderFactory>()
                 .As<IImageBuilderFactory>()
