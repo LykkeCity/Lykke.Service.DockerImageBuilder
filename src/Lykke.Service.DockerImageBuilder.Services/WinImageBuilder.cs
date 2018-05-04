@@ -10,12 +10,15 @@ namespace Lykke.Service.DockerImageBuilder.Services
     public class WinImageBuilder : IImageBuilder
     {
         private const string _gitSuffix = ".git";
-        private const string _publishPath = "app/dist";
+        private const string _publishLocalPath = "app\\dist";
+        private const string _dockerfileName = "Dockerfile";
+        private const string _imageLinePrefix = "FROM ";
 
         private readonly string _diskPath;
         private readonly string _baseWinImage;
         private readonly string _gitRepoUrl;
         private readonly string _workingPath;
+        private readonly string _publishPath;
         private readonly IDockerHubInfoProvider _dockerHubInfoProvider;
         private readonly ILog _log;
 
@@ -43,6 +46,8 @@ namespace Lykke.Service.DockerImageBuilder.Services
                 _workingPath = Path.Combine(_diskPath, gitRepo, Guid.NewGuid().ToString());
             }
             Directory.CreateDirectory(_workingPath);
+            _publishPath = Path.Combine(_workingPath, _publishLocalPath);
+            Directory.CreateDirectory(_publishPath);
         }
 
         public void FetchSources(string commitId)
@@ -65,7 +70,24 @@ namespace Lykke.Service.DockerImageBuilder.Services
 
         public void BuildDockerImage(string fullImageName)
         {
-            ExecuteCommand("docker ", $"build -t {fullImageName} {_publishPath}");
+            var dockerfiles = Directory.EnumerateFiles(_publishPath, _dockerfileName);
+            if (!dockerfiles.Any())
+                throw new InvalidOperationException("Couldn't locate any Dockerfile in solution publish directory");
+            string dockerfile = dockerfiles.First();
+            var lines = File.ReadAllLines(dockerfile);
+            bool isImageReplaced = false;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (!lines[i].StartsWith(_imageLinePrefix))
+                    continue;
+                lines[i] = $"{_imageLinePrefix}{_baseWinImage}";
+                isImageReplaced = true;
+                break;
+            }
+            if (!isImageReplaced)
+                throw new InvalidOperationException("Couldn't locate base image in Dockerfile for replacing");
+            File.WriteAllLines(dockerfile, lines);
+            ExecuteCommand("docker ", $"build -t {fullImageName} {_publishLocalPath}");
         }
 
         public void PublishDocker(string fullImageName)
