@@ -13,6 +13,7 @@ namespace Lykke.Service.DockerImageBuilder.Services
         private const string _publishLocalPath = "app\\dist";
         private const string _dockerfileName = "Dockerfile";
         private const string _imageLinePrefix = "FROM ";
+        private const string _winImageSuffix = "-nano";
 
         private readonly string _diskPath;
         private readonly string _baseWinImage;
@@ -87,6 +88,8 @@ namespace Lykke.Service.DockerImageBuilder.Services
             if (!isImageReplaced)
                 throw new InvalidOperationException("Couldn't locate base image in Dockerfile for replacing");
             File.WriteAllLines(dockerfile, lines);
+            if (!fullImageName.EndsWith(_winImageSuffix))
+                fullImageName = fullImageName + _winImageSuffix;
             ExecuteCommand("docker ", $"build -t {fullImageName} {_publishLocalPath}");
         }
 
@@ -95,6 +98,8 @@ namespace Lykke.Service.DockerImageBuilder.Services
             var dockerHubType = _dockerHubInfoProvider.GetHubTypeFromImageFullName(fullImageName);
             (string dockerHubName, string dockerHubPass) = _dockerHubInfoProvider.GetDockerHubInfo(dockerHubType);
             ExecuteCommand("docker ", $"login -u {dockerHubName} -p {dockerHubPass}");
+            if (!fullImageName.EndsWith(_winImageSuffix))
+                fullImageName = fullImageName + _winImageSuffix;
             ExecuteCommand("docker ", $"push {fullImageName}");
             ExecuteCommand("docker ", $"rmi {fullImageName}");
         }
