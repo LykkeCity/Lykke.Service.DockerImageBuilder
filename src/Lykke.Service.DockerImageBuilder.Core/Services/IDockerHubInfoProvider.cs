@@ -4,7 +4,7 @@ namespace Lykke.Service.DockerImageBuilder.Core.Services
 {
     public interface IDockerHubInfoProvider
     {
-        (string,string) GetDockerHubInfo(DockerHubType dockerHubType);
+        string GetDockerHubName(DockerHubType dockerHubType);
 
         DockerHubType GetHubTypeFromImageFullName(string fullDockerImageName);
     }

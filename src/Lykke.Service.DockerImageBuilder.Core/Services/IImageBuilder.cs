@@ -10,6 +10,6 @@
 
         void BuildDockerImage(string fullImageName);
 
-        void PublishDocker(string fullImageName);
+        void PushToDockerHub(string fullImageName, string dockerHubPassword);
     }
 }

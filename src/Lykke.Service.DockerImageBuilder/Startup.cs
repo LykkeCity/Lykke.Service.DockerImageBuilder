@@ -61,14 +61,7 @@ namespace Lykke.Service.DockerImageBuilder
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                var devHubPassword = Configuration["DevDockerHubPassword"];
-                var prodHubPassword = Configuration["ProdDockerHubPassword"];
-
-                builder.RegisterModule(new ServiceModule(
-                    appSettings.Nested(x => x.DockerImageBuilderService).CurrentValue,
-                    devHubPassword,
-                    prodHubPassword,
-                    Log));
+                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.DockerImageBuilderService).CurrentValue, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
