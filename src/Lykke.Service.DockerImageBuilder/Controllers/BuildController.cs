@@ -30,6 +30,7 @@ namespace Lykke.Service.DockerImageBuilder.Controllers
         /// </summary>
         [HttpPost]
         [SwaggerOperation("DockerWinImage")]
+        [Route("WindowsImage")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(BadRequestResult), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
