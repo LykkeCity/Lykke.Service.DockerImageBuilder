@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
@@ -17,6 +15,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.DockerImageBuilder
 {
@@ -61,8 +62,20 @@ namespace Lykke.Service.DockerImageBuilder
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                var devHubPassword = Configuration["DevDockerHubPassword"];
-                var prodHubPassword = Configuration["ProdDockerHubPassword"];
+                string devHubPassword;
+                string prodHubPassword;
+                const string hubData = "HubData.dat";
+                if (File.Exists(hubData))
+                {
+                    var lines = File.ReadAllLines(hubData);
+                    devHubPassword = lines.Length > 0 ? lines[0] : Configuration["DevDockerHubPassword"];
+                    prodHubPassword = lines.Length > 1 ? lines[1] : Configuration["ProdDockerHubPassword"];
+                }
+                else
+                {
+                    devHubPassword = Configuration["DevDockerHubPassword"];
+                    prodHubPassword = Configuration["ProdDockerHubPassword"];
+                }
 
                 builder.RegisterModule(new ServiceModule(
                     appSettings.Nested(x => x.DockerImageBuilderService).CurrentValue,
